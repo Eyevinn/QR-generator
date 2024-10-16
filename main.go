@@ -58,7 +58,6 @@ func generateQRCodeHandler(w http.ResponseWriter, r *http.Request) {
             logoSize := qrImage.Bounds().Dx() / 5
             scaledLogo := resize.Resize(uint(logoSize), uint(logoSize), logo, resize.Lanczos3)
 
-            // Beräkna både x- och y-offset baserat på logotypens dimensioner
             offsetX := (qrImage.Bounds().Dx() - scaledLogo.Bounds().Dx()) / 2
             offsetY := (qrImage.Bounds().Dy() - scaledLogo.Bounds().Dy()) / 2
             combined := image.NewRGBA(qrImage.Bounds())
