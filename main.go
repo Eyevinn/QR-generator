@@ -47,6 +47,10 @@ func generateQRCodeHandler(w http.ResponseWriter, r *http.Request) {
     }
 
     logoPath := os.Getenv("LOGO_PATH")
+    if logoPathParam := r.URL.Query().Get("logo"); logoPathParam != "" {
+        logoPath = logoPathParam
+    }
+    
     var logo image.Image
 
     if logoPath != "" && strings.HasPrefix(logoPath, "http") {
