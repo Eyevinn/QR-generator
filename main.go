@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,9 +51,17 @@ func (s *server) makeGenerateQRCodeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		text := s.text
 		logoPath := s.logoPath
+		qrSize := 256
 
 		if textParam := r.URL.Query().Get("text"); textParam != "" {
 			text = textParam
+		}
+
+		qrSizeParam := r.URL.Query().Get("size")
+		size, err := strconv.Atoi(qrSizeParam)
+
+		if err == nil {
+			qrSize = size
 		}
 
 		qr, err := qrcode.New(text, qrcode.Medium)
@@ -71,7 +80,7 @@ func (s *server) makeGenerateQRCodeHandler() http.HandlerFunc {
 				http.Error(w, "Failed to load logo", http.StatusInternalServerError)
 				return
 			} else {
-				qrImage := qr.Image(256)
+				qrImage := qr.Image(qrSize)
 				logoSize := qrImage.Bounds().Dx() / 5
 				scaledLogo := resize.Resize(uint(logoSize), uint(logoSize), logo, resize.Lanczos3)
 
@@ -91,7 +100,7 @@ func (s *server) makeGenerateQRCodeHandler() http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "image/png")
-		err = png.Encode(w, qr.Image(256))
+		err = png.Encode(w, qr.Image(qrSize))
 		if err != nil {
 			slog.Error("Failed to encode image", "error", err)
 		}
