@@ -50,7 +50,7 @@ func generateQRCodeHandler(w http.ResponseWriter, r *http.Request) {
     if logoPathParam := r.URL.Query().Get("logo"); logoPathParam != "" {
         logoPath = logoPathParam
     }
-    
+
     var logo image.Image
 
     if logoPath != "" && strings.HasPrefix(logoPath, "http") {
@@ -88,6 +88,6 @@ func main() {
         port = "8080"
     }
     http.HandleFunc("/generate", generateQRCodeHandler)
+    fmt.Println("Server starting on port", port)
     log.Fatal(http.ListenAndServe(":"+port, nil))
-    fmt.Println("Server started on port", port)
 }
