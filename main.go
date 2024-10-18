@@ -70,7 +70,7 @@ func (s *server) makeGenerateQRCodeHandler() http.HandlerFunc {
 
 			if err != nil {
 				http.Error(w, "Invalid QR size, it should be between 128 to 2048", http.StatusBadRequest)
-				slog.Error("Invalid QR size, it should be between 128 to 2048", err)
+				slog.Error("Invalid QR size, it should be between 128 to 2048", "error", err)
 				return
 			}
 
