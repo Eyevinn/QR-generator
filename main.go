@@ -9,12 +9,20 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/nfnt/resize"
 	"github.com/skip2/go-qrcode"
+)
+
+var (
+	defaultPort = "8080"
+	defaultSize = 256
+	minQrSize   = 128
+	maxQrSize   = 2048
 )
 
 func fetchImageFromURL(url string) (image.Image, error) {
@@ -50,9 +58,29 @@ func (s *server) makeGenerateQRCodeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		text := s.text
 		logoPath := s.logoPath
+		qrSize := defaultSize
 
 		if textParam := r.URL.Query().Get("text"); textParam != "" {
 			text = textParam
+		}
+
+		if r.URL.Query().Has("size") {
+			qrSizeParam := r.URL.Query().Get("size")
+			size, err := strconv.Atoi(qrSizeParam)
+
+			if err != nil {
+				http.Error(w, "Invalid QR size, it should be between 128 to 2048", http.StatusBadRequest)
+				slog.Error("Invalid QR size, it should be between 128 to 2048", "error", err)
+				return
+			}
+
+			if size < minQrSize || size > maxQrSize {
+				http.Error(w, "Invalid QR size, it should be between 128 to 2048", http.StatusBadRequest)
+				slog.Error("Invalid QR size, it should be between 128 to 2048")
+				return
+			}
+
+			qrSize = size
 		}
 
 		qr, err := qrcode.New(text, qrcode.Medium)
@@ -71,7 +99,7 @@ func (s *server) makeGenerateQRCodeHandler() http.HandlerFunc {
 				http.Error(w, "Failed to load logo", http.StatusInternalServerError)
 				return
 			} else {
-				qrImage := qr.Image(256)
+				qrImage := qr.Image(qrSize)
 				logoSize := qrImage.Bounds().Dx() / 5
 				scaledLogo := resize.Resize(uint(logoSize), uint(logoSize), logo, resize.Lanczos3)
 
@@ -91,7 +119,7 @@ func (s *server) makeGenerateQRCodeHandler() http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "image/png")
-		err = png.Encode(w, qr.Image(256))
+		err = png.Encode(w, qr.Image(qrSize))
 		if err != nil {
 			slog.Error("Failed to encode image", "error", err)
 		}
@@ -109,7 +137,7 @@ func main() {
 		logoPath: os.Getenv("LOGO_PATH"),
 	}
 	if srv.port == "" {
-		srv.port = "8080"
+		srv.port = defaultPort
 	}
 	err := run(srv) // Use a special function to run the server so it is easier to test
 	if err != nil {
