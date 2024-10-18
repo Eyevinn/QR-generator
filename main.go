@@ -18,6 +18,11 @@ import (
 	"github.com/skip2/go-qrcode"
 )
 
+var (
+	defaultPort = "8080"
+	defaultSize = 256
+)
+
 func fetchImageFromURL(url string) (image.Image, error) {
 	// The default HTTP client does not have any timeout so it can hang forever.
 	// It is therefore recommended to create a new client with a timeout.
@@ -51,7 +56,7 @@ func (s *server) makeGenerateQRCodeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		text := s.text
 		logoPath := s.logoPath
-		qrSize := 256
+		qrSize := defaultSize
 
 		if textParam := r.URL.Query().Get("text"); textParam != "" {
 			text = textParam
@@ -118,7 +123,7 @@ func main() {
 		logoPath: os.Getenv("LOGO_PATH"),
 	}
 	if srv.port == "" {
-		srv.port = "8080"
+		srv.port = defaultPort
 	}
 	err := run(srv) // Use a special function to run the server so it is easier to test
 	if err != nil {
