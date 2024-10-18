@@ -21,6 +21,8 @@ import (
 var (
 	defaultPort = "8080"
 	defaultSize = 256
+	minQrSize   = 128
+	maxQrSize   = 2048
 )
 
 func fetchImageFromURL(url string) (image.Image, error) {
@@ -62,10 +64,22 @@ func (s *server) makeGenerateQRCodeHandler() http.HandlerFunc {
 			text = textParam
 		}
 
-		qrSizeParam := r.URL.Query().Get("size")
-		size, err := strconv.Atoi(qrSizeParam)
+		if r.URL.Query().Has("size") {
+			qrSizeParam := r.URL.Query().Get("size")
+			size, err := strconv.Atoi(qrSizeParam)
 
-		if err == nil {
+			if err != nil {
+				http.Error(w, "Invalid QR size, it should be between 128 to 2048", http.StatusBadRequest)
+				slog.Error("Invalid QR size, it should be between 128 to 2048", err)
+				return
+			}
+
+			if size < minQrSize || size > maxQrSize {
+				http.Error(w, "Invalid QR size, it should be between 128 to 2048", http.StatusBadRequest)
+				slog.Error("Invalid QR size, it should be between 128 to 2048")
+				return
+			}
+
 			qrSize = size
 		}
 
